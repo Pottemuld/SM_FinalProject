@@ -54,7 +54,7 @@ idt2_pca <- predict(idt1_pca,idt2_norm)
 idt2_reduced <- idt2_pca[,1:ncol(idt1_reduced)]
 idt2_reduced <- as.data.frame(idt2_reduced)
 
-# test data 1 (train)
+# test data 3 (train)
 idt3 <- do.call(rbind, idList[1:5])
 idt3 <- as.data.frame(idt3)
 idt3[,1] <- factor(idt3[,1])
@@ -65,6 +65,18 @@ idt3_eigs <- idt3_pca$sdev^2
 idt3_Proportion = idt3_eigs/sum(idt3_eigs)
 idt3_reduced <- idt3_pca$x[,cumsum(idt3_Proportion) < 0.99]
 idt3_reduced <- as.data.frame(idt3_reduced)
+
+# test data 4 (train)
+id_full <- do.call(rbind, idList)
+id_full <- as.data.frame(id_full)
+id_full[,1] <- factor(id_full[,1])
+id_full_shuf <- id_full[sample(nrow(id_full)),] 
+id_full_norm <- as.data.frame(lapply(id_full_shuf[-1], normalize))
+id_full_pca <- prcomp(id_full_norm, center = TRUE, scale. = TRUE)
+id_full_eigs <- id_full_pca$sdev^2
+id_full_Proportion = id_full_eigs/sum(id_full_eigs)
+id_full_reduced <- id_full_pca$x[,cumsum(id_full_Proportion) < 0.99]
+id_full_reduced <- as.data.frame(id_full_reduced)
 
 ################################################################# KNN ################################################################# 
 # single test
@@ -79,15 +91,19 @@ print( sum(diag(cf$table))/sum(cf$table) )
 
 
 #k experiments (train = idt1 test = idt2)
-k <- round(sqrt(nrow(idt1_shuf)+idt2_shuf), digits = 0)
-values <- seq.int(min(k/2), max(k*2), length.out= round(k/2,digets=0))
-result <-c(1:k)
-kvalues <- c(1:k)
-for(i in 1:k){
-  train_labels <- idt1_shuf[,1]
-  test_labels <- idt2_shuf[,1]
+k <- round(sqrt(nrow(id_full_shuf)), digits = 0)
+train_bestk <- id_full_reduced[1:(nrow(id_full_reduced) * 9) / 10,]
+test_bestk <- id_full_reduced[((nrow(id_full_reduced) * 9) / 10) + 1 : nrow(id_full_reduced),]
+
+train_labels <- id_full_shuf[1:(nrow(id_full_reduced) * 9) / 10,1]
+test_labels <- id_full_shuf[((nrow(id_full_reduced) * 9) / 10) + 1 : nrow(id_full_reduced),1]
+
+values <- seq.int(min(k/4), max(k*4), length.out= 50)
+result <-c(1:length(values))
+kvalues <- c(1:length(values))
+for(i in 1:length(values)){
   
-  test_pred <- knn(train = idt1_reduced, test = idt2_reduced, cl = train_labels, k=values[i])
+  test_pred <- knn(train = train_bestk, test = test_bestk, cl = train_labels, k=values[i])
   
   cf <- confusionMatrix(test_labels, test_pred)
   result[i]<-( sum(diag(cf$table))/sum(cf$table) )
@@ -97,21 +113,32 @@ plot(kvalues, result)
 
 
 
-#Crosvalidation (dataset = idt3)
-folds <- createFolds(idt3_shuf[,1], k=10)
+#Cross validation (dataset = id_full)
+folds <- createFolds(id_full_shuf[,1], k=10)
 listOfFolders <- c(1:10)
-k <- round(sqrt(nrow(idt3_shuf)), digits = 0)
+k <- round(sqrt(nrow(id_full_shuf)), digits = 0)
+
+total_time <- c(1:10)
 for(i in 1:10){
-  train <- idt3_reduced[-folds[[i]],]
-  test <- idt3_reduced[folds[[i]],]
+  train <- id_full_reduced[-folds[[i]],]
+  test <- id_full_reduced[folds[[i]],]
   
-  train_labels <- idt3_shuf[-folds[[i]],1]
-  test_labels <- idt3_shuf[folds[[i]],1]
+  train_labels <- id_full_shuf[-folds[[i]],1]
+  test_labels <- id_full_shuf[folds[[i]],1]
   
+  start_time <- proc.time()
   test_pred <- knn(train =train, test = test, cl = train_labels, k=k)
+  iteration_time <- proc.time() - start_time
+  
+  total_time[i] <- iteration_time[3]
+  
   cf <- confusionMatrix(test_labels, test_pred)
   listOfFolders[i] <- sum(diag(cf$table))/sum(cf$table)
 }
+print(total_time)
+mean(total_time)
+sd(total_time)
+
 print(listOfFolders)
 mean(listOfFolders)
 var(listOfFolders)
@@ -119,16 +146,16 @@ var(listOfFolders)
 
 ################################################################# Random Forest ################################################################# 
 
-#setup data  (data = idt3)
-train_with_result <- cbind(number=idt3_shuf[,1], idt3_reduced)
+#setup data  (data = id_full)
+train_with_result <- cbind(number=id_full_shuf[,1], id_full_reduced)
 train_with_result[,1] <-factor(train_with_result[,1])
 
 #create forest
 model.randomForest <- randomForest(number ~ ., data = train_with_result, ntree = 20)
 
 # albow test with testdata (test = idt1)
-idt1_pca <- predict(idt3_pca,idt1_norm)
-idt1_reduced <- idt1_pca[,1:ncol(idt3_reduced)]
+idt1_pca <- predict(id_full_pca,idt1_norm)
+idt1_reduced <- idt1_pca[,1:ncol(id_full_reduced)]
 idt1_reduced <- as.data.frame(idt1_reduced)
 albow_test_data <- cbind(number=idt1_shuf[,1], idt1_reduced)
 albow_test_data[,1] <- factor(albow_test_data[,1])
