@@ -175,17 +175,18 @@ train_with_result <- cbind(number=id_full_shuf[,1], id_full_reduced)
 train_with_result[,1] <-factor(train_with_result[,1])
 
 #create folds
-folds <- createFolds(id_id_full[,1], k=10)
+folds <- createFolds(id_full[,1], k=10)
 listOfFolders <- c(1:10)
 total_time <- c(1:10)
 
 for(i in 1:10){
+  print(i)
   train <- train_with_result[-folds[[i]],]
   test <- train_with_result[folds[[i]],]
 
   start_time <- proc.time()
   #create forest
-  model.randomForest <- randomForest(number ~ ., data = train, ntree = 20)
+  model.randomForest <- randomForest(number ~ ., data = train, ntree = 25)
   
   #test forest
   p <- predict(model.randomForest, test)
