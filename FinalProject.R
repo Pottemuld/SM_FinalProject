@@ -90,13 +90,13 @@ print( sum(diag(cf$table))/sum(cf$table) )
 
 
 
-#k experiments (train = idt1 test = idt2)
+#k experiments (train = 90% id_full  test = 10% id_full)
 k <- round(sqrt(nrow(id_full_shuf)), digits = 0)
-train_bestk <- id_full_reduced[1:(nrow(id_full_reduced) * 9) / 10,]
-test_bestk <- id_full_reduced[((nrow(id_full_reduced) * 9) / 10) + 1 : nrow(id_full_reduced),]
+train_bestk <- id_full_reduced[1:(nrow(id_full_reduced)/10 *9),]
+test_bestk <- id_full_reduced[((nrow(id_full_reduced)/10 *9) + 1) : nrow(id_full_reduced),]
 
-train_labels <- id_full_shuf[1:(nrow(id_full_reduced) * 9) / 10,1]
-test_labels <- id_full_shuf[((nrow(id_full_reduced) * 9) / 10) + 1 : nrow(id_full_reduced),1]
+train_labels <- id_full_shuf[1:(nrow(id_full_reduced)/10 *9),]
+test_labels <- id_full_shuf[((nrow(id_full_reduced)/10 *9) + 1) : nrow(id_full_reduced),]
 
 values <- seq.int(min(k/4), max(k*4), length.out= 50)
 result <-c(1:length(values))
