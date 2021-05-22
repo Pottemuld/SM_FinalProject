@@ -168,14 +168,14 @@ cf <- confusionMatrix(albow_test[,1], p)
 print( sum(diag(cf$table))/sum(cf$table) )
 plot(model.randomForest)
 
-#####Cross validation (dataset = idt3)
+#####Cross validation (dataset = id_full)
 
 #setup data
-train_with_result <- cbind(number=idt3_shuf[,1], idt3_reduced)
+train_with_result <- cbind(number=id_full_shuf[,1], id_full_reduced)
 train_with_result[,1] <-factor(train_with_result[,1])
 
 #create folds
-folds <- createFolds(id_idt3[,1], k=10)
+folds <- createFolds(id_id_full[,1], k=10)
 listOfFolders <- c(1:10)
 total_time <- c(1:10)
 
@@ -202,7 +202,7 @@ sd(total_time)
 
 print(listOfFolders)
 mean(listOfFolders)
-var(listOfFolders)
+sd(listOfFolders)
 
 
 ###### alt 10-fold cross validation
