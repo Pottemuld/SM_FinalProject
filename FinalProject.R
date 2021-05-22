@@ -146,8 +146,8 @@ var(listOfFolders)
 
 ################################################################# Random Forest ################################################################# 
 
-#setup data  (data = id_full)
-train_with_result <- cbind(number=id_full_shuf[,1], id_full_reduced)
+#setup data  (data = idt3)
+train_with_result <- cbind(number=idt3_shuf[,1], idt3_reduced)
 train_with_result[,1] <-factor(train_with_result[,1])
 
 #create forest
@@ -166,8 +166,45 @@ cf <- confusionMatrix(p, albow_test_data[,1])
 print( sum(diag(cf$table))/sum(cf$table) )
 plot(model.randomForest)
 
-#10-fold cross validation
-model.cv <- rf.crossValidation(x = model.randomForest, xdata = train_with_result, p = 0.1, n = 10) 
+#####Cross validation (dataset = idt3)
+
+#setup data
+train_with_result <- cbind(number=idt3_shuf[,1], idt3_reduced)
+train_with_result[,1] <-factor(train_with_result[,1])
+
+#create folds
+folds <- createFolds(id_full_shuf[,1], k=10)
+listOfFolders <- c(1:10)
+total_time <- c(1:10)
+
+for(i in 1:10){
+  train <- train_with_result[-folds[[i]],]
+  test <- train_with_result[folds[[i]],]
+
+  start_time <- proc.time()
+  #create forest
+  model.randomForest <- randomForest(number ~ ., data = train, ntree = 20)
+  
+  #test forest
+  p <- predict(model.randomForest, test)
+  
+  iteration_time <- proc.time() - start_time
+  total_time[i] <- iteration_time[3]
+  
+  cf <- confusionMatrix(test[,1], p)
+  listOfFolders[i] <- sum(diag(cf$table))/sum(cf$table)
+}
+print(total_time)
+mean(total_time)
+sd(total_time)
+
+print(listOfFolders)
+mean(listOfFolders)
+var(listOfFolders)
+
+
+###### alt 10-fold cross validation
+model.cv <- rf.crossValidation(x = model.randomForest, xdata = train_with_result, p = 0.1, n = 10, trace = TRUE) 
 
 # Plot cross validation verses model producers accuracy
 par(mfrow=c(1,2)) 
