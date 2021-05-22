@@ -123,6 +123,7 @@ k <- round(sqrt(nrow(id_full_shuf)), digits = 0)
 
 total_time <- c(1:10)
 for(i in 1:10){
+  print(i)
   train <- id_full_reduced[-folds[[i]],]
   test <- id_full_reduced[folds[[i]],]
   
@@ -130,7 +131,7 @@ for(i in 1:10){
   test_labels <- id_full_shuf[folds[[i]],1]
   
   start_time <- proc.time()
-  test_pred <- knn(train =train, test = test, cl = train_labels, k=k)
+  test_pred <- knn(train =train, test = test, cl = train_labels, k=25)
   iteration_time <- proc.time() - start_time
   
   total_time[i] <- iteration_time[3]
@@ -144,7 +145,7 @@ sd(total_time)
 
 print(listOfFolders)
 mean(listOfFolders)
-var(listOfFolders)
+sd(listOfFolders)
 
 
 ################################################################# Random Forest ################################################################# 
