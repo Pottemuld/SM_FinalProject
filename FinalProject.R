@@ -78,7 +78,7 @@ id_full_Proportion = id_full_eigs/sum(id_full_eigs)
 id_full_reduced <- id_full_pca$x[,cumsum(id_full_Proportion) < 0.99]
 id_full_reduced <- as.data.frame(id_full_reduced)
 
-# test data 4 (train)
+# test data 5 (train)
 id_full_nonshuf <- do.call(rbind, idList)
 id_full_nonshuf <- as.data.frame(id_full_nonshuf)
 id_full_nonshuf[,1] <- factor(id_full_nonshuf[,1])
@@ -258,6 +258,49 @@ sd(total_time)
 print(listOfFolders)
 mean(listOfFolders)
 sd(listOfFolders)
+
+
+#####disjuckt crossvalidation (dataset  = id_full_nonshuf)
+
+#setup data
+#train_with_result <- cbind(number=id_full_nonshuf_shuf[,1], id_full_nonshuf_reduced)
+#train_with_result[,1] <-factor(train_with_result[,1])
+
+#create folds
+#folds <- createFolds(id_full_nonshuf[,1], k=10)
+
+test_start_index <- c(1, 4, 8, 12, 16, 20, 24, 28, 32, 35)
+test_stop_index <- c(4, 8, 12, 16, 20, 24, 28, 32, 35, 38)
+listOfFolders <- c(1:10)
+total_time <- c(1:10)
+
+for(i in 1:10){
+  print(i)
+  
+  train <- id_full_nonshuf_reduced[-c((test_start_index[i]*2000-1999):(test_stop_index[i]*2000)),]
+  test <- id_full_nonshuf_reduced[(test_start_index[i]*2000-1999):(test_stop_index[i]*2000),]
+  
+  start_time <- proc.time()
+  #create forest
+  model.randomForest <- randomForest(number ~ ., data = train, ntree = 25)
+  
+  #test forest
+  p <- predict(model.randomForest, test)
+  
+  iteration_time <- proc.time() - start_time
+  total_time[i] <- iteration_time[3]
+  
+  cf <- confusionMatrix(test[,1], p)
+  listOfFolders[i] <- sum(diag(cf$table))/sum(cf$table)
+}
+print(total_time)
+mean(total_time)
+sd(total_time)
+
+print(listOfFolders)
+mean(listOfFolders)
+sd(listOfFolders)
+
 
 
 ###### alt 10-fold cross validation
